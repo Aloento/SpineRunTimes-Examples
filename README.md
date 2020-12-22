@@ -15,6 +15,8 @@ Java的话我个人用的是JDK15，这个无大碍
 需要Maven，虽然官方建议是Gradle  
 libGDX的依赖配置对不用Gradle的人来说才是真的恶心  
 当然如果你用Gradle那可以一键配置  
+SpineViewer在15下应该是有问题  
+我也搞不太清楚那个非法反射是个啥  
 
 ### C#
 C#的话我目前还在研究  
