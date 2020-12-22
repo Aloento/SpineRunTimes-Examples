@@ -1,32 +1,3 @@
-/******************************************************************************
- * Spine Runtimes License Agreement
- * Last updated January 1, 2020. Replaces all prior versions.
- *
- * Copyright (c) 2013-2020, Esoteric Software LLC
- *
- * Integration of the Spine Runtimes into software or otherwise creating
- * derivative works of the Spine Runtimes is permitted under the terms and
- * conditions of Section 2 of the Spine Editor License Agreement:
- * http://esotericsoftware.com/spine-editor-license
- *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software
- * or otherwise create derivative works of the Spine Runtimes (collectively,
- * "Products"), provided that each user of the Products must obtain their own
- * Spine Editor license and redistribution of the Products in any form must
- * include this license and copyright notice.
- *
- * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
- * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
-
 package com.esotericsoftware.spine;
 
 import java.lang.reflect.Field;
@@ -134,7 +105,7 @@ public class AnimationStateTests {
 	int test;
 
 	AnimationStateTests () {
-		skeletonData = json.readSkeletonData(new LwjglFileHandle("test/test.json", FileType.Internal));
+		skeletonData = json.readSkeletonData(new LwjglFileHandle("spineboy/spineboy-ess.json", FileType.Internal));
 
 		TrackEntry entry;
 
@@ -437,10 +408,8 @@ public class AnimationStateTests {
 			expect(1, "dispose", 1, 3.1f) //
 		);
 		state.setAnimation(0, "events0", true);
-		run(0.1f, 6, new TestListener() {
-			public void frame (float time) {
-				if (MathUtils.isEqual(time, 1.4f)) state.addAnimation(0, "events1", false, 0).setTrackEnd(1);
-			}
+		run(0.1f, 6, time -> {
+			if (MathUtils.isEqual(time, 1.4f)) state.addAnimation(0, "events1", false, 0).setTrackEnd(1);
 		});
 
 		setup("add animation on empty track", // 14
@@ -568,13 +537,11 @@ public class AnimationStateTests {
 			expect(1, "dispose", 1, 2.1f) //
 		);
 		state.setAnimation(0, "events0", true);
-		run(0.1f, 1000, new TestListener() {
-			public void frame (float time) {
-				if (MathUtils.isEqual(time, 1f)) {
-					TrackEntry entry = state.setAnimation(0, "events1", false);
-					entry.setMixDuration(0.7f);
-					entry.setTrackEnd(1);
-				}
+		run(0.1f, 1000, time -> {
+			if (MathUtils.isEqual(time, 1f)) {
+				TrackEntry entry1 = state.setAnimation(0, "events1", false);
+				entry1.setMixDuration(0.7f);
+				entry1.setTrackEnd(1);
 			}
 		});
 
@@ -611,12 +578,10 @@ public class AnimationStateTests {
 		);
 		state.setAnimation(0, "events0", false); // First should be ignored.
 		state.setAnimation(0, "events1", false);
-		run(0.1f, 1000, new TestListener() {
-			public void frame (float time) {
-				if (MathUtils.isEqual(time, 0.8f)) {
-					state.setAnimation(0, "events0", false); // First should be ignored.
-					state.setAnimation(0, "events2", false).setTrackEnd(1);
-				}
+		run(0.1f, 1000, time -> {
+			if (MathUtils.isEqual(time, 0.8f)) {
+				state.setAnimation(0, "events0", false); // First should be ignored.
+				state.setAnimation(0, "events2", false).setTrackEnd(1);
 			}
 		});
 
@@ -669,16 +634,14 @@ public class AnimationStateTests {
 		stateData.setDefaultMix(0.6f);
 		state.setAnimation(0, "events0", false); // First should be ignored.
 		state.setAnimation(0, "events1", false);
-		run(0.1f, 1000, new TestListener() {
-			public void frame (float time) {
-				if (MathUtils.isEqual(time, 0.2f)) {
-					state.setAnimation(0, "events0", false); // First should be ignored.
-					state.setAnimation(0, "events2", false);
-				}
-				if (MathUtils.isEqual(time, 0.4f)) {
-					state.setAnimation(0, "events1", false); // First should be ignored.
-					state.setAnimation(0, "events0", false).setTrackEnd(1);
-				}
+		run(0.1f, 1000, time -> {
+			if (MathUtils.isEqual(time, 0.2f)) {
+				state.setAnimation(0, "events0", false); // First should be ignored.
+				state.setAnimation(0, "events2", false);
+			}
+			if (MathUtils.isEqual(time, 0.4f)) {
+				state.setAnimation(0, "events1", false); // First should be ignored.
+				state.setAnimation(0, "events0", false).setTrackEnd(1);
 			}
 		});
 
@@ -733,10 +696,8 @@ public class AnimationStateTests {
 			expect(0, "dispose", 0.7f, 0.7f) //
 		);
 		state.addAnimation(0, "events0", false, 0).setTrackEnd(1);
-		run(0.1f, 10, new TestListener() {
-			public void frame (float time) {
-				if (MathUtils.isEqual(time, 0.7f)) state.clearTrack(0);
-			}
+		run(0.1f, 10, time -> {
+			if (MathUtils.isEqual(time, 0.7f)) state.clearTrack(0);
 		});
 
 		setup("setEmptyAnimation", // 26
@@ -755,10 +716,8 @@ public class AnimationStateTests {
 			expect(-1, "dispose", 0.2f, 1) //
 		);
 		state.addAnimation(0, "events0", false, 0).setTrackEnd(1);
-		run(0.1f, 10, new TestListener() {
-			public void frame (float time) {
-				if (MathUtils.isEqual(time, 0.7f)) state.setEmptyAnimation(0, 0);
-			}
+		run(0.1f, 10, time -> {
+			if (MathUtils.isEqual(time, 0.7f)) state.setEmptyAnimation(0, 0);
 		});
 
 		setup("TrackEntry listener"); // 27
@@ -963,7 +922,7 @@ public class AnimationStateTests {
 		System.out.println(message);
 	}
 
-	class Result {
+	static class Result {
 		String name;
 		int animationIndex;
 		float trackTime, totalTime;
@@ -982,8 +941,7 @@ public class AnimationStateTests {
 			if (animationIndex != other.animationIndex) return false;
 			if (!name.equals(other.name)) return false;
 			if (!MathUtils.isEqual(totalTime, other.totalTime)) return false;
-			if (!MathUtils.isEqual(trackTime, other.trackTime)) return false;
-			return true;
+			return MathUtils.isEqual(trackTime, other.trackTime);
 		}
 
 		public String toString () {
@@ -1001,7 +959,7 @@ public class AnimationStateTests {
 		return text.endsWith(".0") ? text.substring(0, text.length() - 2) : text;
 	}
 
-	static interface TestListener {
+	interface TestListener {
 		void frame (float time);
 	}
 
