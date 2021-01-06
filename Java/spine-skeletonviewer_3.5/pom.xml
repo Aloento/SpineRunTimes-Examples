@@ -27,35 +27,30 @@
     <dependency>
       <groupId>com.badlogicgames.gdx</groupId>
       <artifactId>gdx</artifactId>
-      <version>1.9.11</version>
+      <version>1.9.6</version>
     </dependency>
     <dependency>
       <groupId>com.badlogicgames.gdx</groupId>
       <artifactId>gdx-platform</artifactId>
-      <version>1.9.11</version>
+      <version>1.9.6</version>
       <classifier>natives-desktop</classifier>
     </dependency>
     <dependency>
       <groupId>com.badlogicgames.gdx</groupId>
       <artifactId>gdx-box2d</artifactId>
-      <version>1.9.11</version>
+      <version>1.9.6</version>
     </dependency>
     <dependency>
       <groupId>com.badlogicgames.gdx</groupId>
       <artifactId>gdx-box2d-platform</artifactId>
-      <version>1.9.11</version>
+      <version>1.9.6</version>
       <classifier>natives-desktop</classifier>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.badlogicgames.gdx</groupId>
       <artifactId>gdx-backend-lwjgl</artifactId>
-      <version>1.9.11</version>
-    </dependency>
-    <dependency>
-      <groupId>com.esotericsoftware.spine</groupId>
-      <artifactId>spine-libgdx</artifactId>
-      <version>3.5.51.1</version>
+      <version>1.9.6</version>
     </dependency>
   </dependencies>
 
