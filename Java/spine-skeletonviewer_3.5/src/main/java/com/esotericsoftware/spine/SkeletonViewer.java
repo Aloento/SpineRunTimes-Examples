@@ -785,8 +785,8 @@ public class SkeletonViewer extends ApplicationAdapter {
 			speedSlider.setValue(prefs.getFloat("speed", 0.3f));
 			mixSlider.setValue(prefs.getFloat("mix", 0.3f));
 			scaleSlider.setValue(prefs.getFloat("scale", 1));
-			// skeletonX = prefs.getInteger("x", 0);
-			// skeletonY = prefs.getInteger("y", 0);
+			skeletonX = prefs.getInteger("x", 0);
+			skeletonY = prefs.getInteger("y", 0);
 			animationList.setSelected(prefs.getString("animationName", null));
 			skinList.setSelected(prefs.getString("skinName", null));
 			prefsLoaded = true;
