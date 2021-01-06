@@ -30,67 +30,71 @@
 
 package com.esotericsoftware.spine.attachments;
 
-import static com.badlogic.gdx.math.MathUtils.*;
+import com.esotericsoftware.spine.Slot;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.math.Vector2;
-import com.esotericsoftware.spine.Bone;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 
-/** An attachment which is a single point and a rotation. This can be used to spawn projectiles, particles, etc. A bone can be
- * used in similar ways, but a PointAttachment is slightly less expensive to compute and can be hidden, shown, and placed in a
- * skin.
- * <p>
- * See <a href="http://esotericsoftware.com/spine-point-attachments">Point Attachments</a> in the Spine User Guide. */
-public class PointAttachment extends Attachment {
-	float x, y, rotation;
+/** Attachment that displays various texture regions over time. */
+public class RegionSequenceAttachment extends RegionAttachment {
+	private Mode mode;
+	private float frameTime;
+	private TextureRegion[] regions;
 
-	// Nonessential.
-	final Color color = new Color(0.9451f, 0.9451f, 0, 1); // f1f100ff
-
-	public PointAttachment (String name) {
+	public RegionSequenceAttachment (String name) {
 		super(name);
 	}
 
-	public float getX () {
-		return x;
+	public float[] updateWorldVertices (Slot slot, boolean premultipliedAlpha) {
+		if (regions == null) throw new IllegalStateException("Regions have not been set: " + this);
+
+		int frameIndex = (int)(slot.getAttachmentTime() / frameTime);
+		switch (mode) {
+		case forward:
+			frameIndex = Math.min(regions.length - 1, frameIndex);
+			break;
+		case forwardLoop:
+			frameIndex = frameIndex % regions.length;
+			break;
+		case pingPong:
+			frameIndex = frameIndex % (regions.length << 1);
+			if (frameIndex >= regions.length) frameIndex = regions.length - 1 - (frameIndex - regions.length);
+			break;
+		case random:
+			frameIndex = MathUtils.random(regions.length - 1);
+			break;
+		case backward:
+			frameIndex = Math.max(regions.length - frameIndex - 1, 0);
+			break;
+		case backwardLoop:
+			frameIndex = frameIndex % regions.length;
+			frameIndex = regions.length - frameIndex - 1;
+			break;
+		}
+		setRegion(regions[frameIndex]);
+
+		return super.updateWorldVertices(slot, premultipliedAlpha);
 	}
 
-	public void setX (float x) {
-		this.x = x;
+	public TextureRegion[] getRegions () {
+		if (regions == null) throw new IllegalStateException("Regions have not been set: " + this);
+		return regions;
 	}
 
-	public float getY () {
-		return y;
+	public void setRegions (TextureRegion[] regions) {
+		this.regions = regions;
 	}
 
-	public void setY (float y) {
-		this.y = y;
+	/** Sets the time in seconds each frame is shown. */
+	public void setFrameTime (float frameTime) {
+		this.frameTime = frameTime;
 	}
 
-	public float getRotation () {
-		return rotation;
+	public void setMode (Mode mode) {
+		this.mode = mode;
 	}
 
-	public void setRotation (float rotation) {
-		this.rotation = rotation;
-	}
-
-	/** The color of the point attachment as it was in Spine. Available only when nonessential data was exported. Point attachments
-	 * are not usually rendered at runtime. */
-	public Color getColor () {
-		return color;
-	}
-
-	public Vector2 computeWorldPosition (Bone bone, Vector2 point) {
-		point.x = x * bone.getA() + y * bone.getB() + bone.getWorldX();
-		point.y = x * bone.getC() + y * bone.getD() + bone.getWorldY();
-		return point;
-	}
-
-	public float computeWorldRotation (Bone bone) {
-		float cos = cosDeg(rotation), sin = sinDeg(rotation);
-		float x = cos * bone.getA() + sin * bone.getB();
-		float y = cos * bone.getC() + sin * bone.getD();
-		return (float)Math.atan2(y, x) * radDeg;
+	static public enum Mode {
+		forward, backward, forwardLoop, backwardLoop, pingPong, random
 	}
 }

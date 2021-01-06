@@ -72,8 +72,7 @@ public class SkeletonBounds {
 
 				FloatArray polygon = polygonPool.obtain();
 				polygons.add(polygon);
-				boundingBox.computeWorldVertices(slot, 0, boundingBox.getWorldVerticesLength(),
-					polygon.setSize(boundingBox.getWorldVerticesLength()), 0, 2);
+				boundingBox.computeWorldVertices(slot, polygon.setSize(boundingBox.getWorldVerticesLength()));
 			}
 		}
 

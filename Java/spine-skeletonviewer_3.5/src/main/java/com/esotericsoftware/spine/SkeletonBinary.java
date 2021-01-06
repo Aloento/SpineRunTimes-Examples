@@ -57,7 +57,6 @@ import com.esotericsoftware.spine.Animation.ShearTimeline;
 import com.esotericsoftware.spine.Animation.Timeline;
 import com.esotericsoftware.spine.Animation.TransformConstraintTimeline;
 import com.esotericsoftware.spine.Animation.TranslateTimeline;
-import com.esotericsoftware.spine.Animation.TwoColorTimeline;
 import com.esotericsoftware.spine.BoneData.TransformMode;
 import com.esotericsoftware.spine.PathConstraintData.PositionMode;
 import com.esotericsoftware.spine.PathConstraintData.RotateMode;
@@ -68,10 +67,8 @@ import com.esotericsoftware.spine.attachments.Attachment;
 import com.esotericsoftware.spine.attachments.AttachmentLoader;
 import com.esotericsoftware.spine.attachments.AttachmentType;
 import com.esotericsoftware.spine.attachments.BoundingBoxAttachment;
-import com.esotericsoftware.spine.attachments.ClippingAttachment;
 import com.esotericsoftware.spine.attachments.MeshAttachment;
 import com.esotericsoftware.spine.attachments.PathAttachment;
-import com.esotericsoftware.spine.attachments.PointAttachment;
 import com.esotericsoftware.spine.attachments.RegionAttachment;
 import com.esotericsoftware.spine.attachments.VertexAttachment;
 
@@ -88,7 +85,6 @@ public class SkeletonBinary {
 
 	static public final int SLOT_ATTACHMENT = 0;
 	static public final int SLOT_COLOR = 1;
-	static public final int SLOT_TWO_COLOR = 2;
 
 	static public final int PATH_POSITION = 0;
 	static public final int PATH_SPACING = 1;
@@ -98,7 +94,7 @@ public class SkeletonBinary {
 	static public final int CURVE_STEPPED = 1;
 	static public final int CURVE_BEZIER = 2;
 
-	static private final Color tempColor1 = new Color(), tempColor2 = new Color();
+	static private final Color tempColor = new Color();
 
 	private final AttachmentLoader attachmentLoader;
 	private float scale = 1;
@@ -210,10 +206,6 @@ public class SkeletonBinary {
 				BoneData boneData = skeletonData.bones.get(input.readInt(true));
 				SlotData data = new SlotData(i, slotName, boneData);
 				Color.rgba8888ToColor(data.color, input.readInt());
-
-				int darkColor = input.readInt();
-				if (darkColor != -1) Color.rgb888ToColor(data.darkColor = new Color(), darkColor);
-
 				data.attachmentName = input.readString();
 				data.blendMode = BlendMode.values[input.readInt(true)];
 				skeletonData.slots.add(data);
@@ -238,8 +230,6 @@ public class SkeletonBinary {
 				for (int ii = 0, nn = input.readInt(true); ii < nn; ii++)
 					data.bones.add(skeletonData.bones.get(input.readInt(true)));
 				data.target = skeletonData.bones.get(input.readInt(true));
-				data.local = input.readBoolean();
-				data.relative = input.readBoolean();
 				data.offsetRotation = input.readFloat();
 				data.offsetX = input.readFloat() * scale;
 				data.offsetY = input.readFloat() * scale;
@@ -274,7 +264,7 @@ public class SkeletonBinary {
 			}
 
 			// Default skin.
-			Skin defaultSkin = readSkin(input, skeletonData, "default", nonessential);
+			Skin defaultSkin = readSkin(input, "default", nonessential);
 			if (defaultSkin != null) {
 				skeletonData.defaultSkin = defaultSkin;
 				skeletonData.skins.add(defaultSkin);
@@ -282,7 +272,7 @@ public class SkeletonBinary {
 
 			// Skins.
 			for (int i = 0, n = input.readInt(true); i < n; i++)
-				skeletonData.skins.add(readSkin(input, skeletonData, input.readString(), nonessential));
+				skeletonData.skins.add(readSkin(input, input.readString(), nonessential));
 
 			// Linked meshes.
 			for (int i = 0, n = linkedMeshes.size; i < n; i++) {
@@ -307,7 +297,7 @@ public class SkeletonBinary {
 
 			// Animations.
 			for (int i = 0, n = input.readInt(true); i < n; i++)
-				readAnimation(input, input.readString(), skeletonData);
+				readAnimation(input.readString(), input, skeletonData);
 
 		} catch (IOException ex) {
 			throw new SerializationException("Error reading skeleton file.", ex);
@@ -328,7 +318,7 @@ public class SkeletonBinary {
 	}
 
 	/** @return May be null. */
-	private Skin readSkin (DataInput input, SkeletonData skeletonData, String skinName, boolean nonessential) throws IOException {
+	private Skin readSkin (DataInput input, String skinName, boolean nonessential) throws IOException {
 		int slotCount = input.readInt(true);
 		if (slotCount == 0) return null;
 		Skin skin = new Skin(skinName);
@@ -336,15 +326,15 @@ public class SkeletonBinary {
 			int slotIndex = input.readInt(true);
 			for (int ii = 0, nn = input.readInt(true); ii < nn; ii++) {
 				String name = input.readString();
-				Attachment attachment = readAttachment(input, skeletonData, skin, slotIndex, name, nonessential);
+				Attachment attachment = readAttachment(input, skin, slotIndex, name, nonessential);
 				if (attachment != null) skin.addAttachment(slotIndex, name, attachment);
 			}
 		}
 		return skin;
 	}
 
-	private Attachment readAttachment (DataInput input, SkeletonData skeletonData, Skin skin, int slotIndex, String attachmentName,
-		boolean nonessential) throws IOException {
+	private Attachment readAttachment (DataInput input, Skin skin, int slotIndex, String attachmentName, boolean nonessential)
+		throws IOException {
 		float scale = this.scale;
 
 		String name = input.readString();
@@ -472,35 +462,6 @@ public class SkeletonBinary {
 			if (nonessential) Color.rgba8888ToColor(path.getColor(), color);
 			return path;
 		}
-		case point: {
-			float rotation = input.readFloat();
-			float x = input.readFloat();
-			float y = input.readFloat();
-			int color = nonessential ? input.readInt() : 0;
-
-			PointAttachment point = attachmentLoader.newPointAttachment(skin, name);
-			if (point == null) return null;
-			point.setX(x * scale);
-			point.setY(y * scale);
-			point.setRotation(rotation);
-			if (nonessential) Color.rgba8888ToColor(point.getColor(), color);
-			return point;
-		}
-		case clipping: {
-			int endSlotIndex = input.readInt(true);
-			int vertexCount = input.readInt(true);
-			Vertices vertices = readVertices(input, vertexCount);
-			int color = nonessential ? input.readInt() : 0;
-
-			ClippingAttachment clip = attachmentLoader.newClippingAttachment(skin, name);
-			if (clip == null) return null;
-			clip.setEndSlot(skeletonData.slots.get(endSlotIndex));
-			clip.setWorldVerticesLength(vertexCount << 1);
-			clip.setVertices(vertices.vertices);
-			clip.setBones(vertices.bones);
-			if (nonessential) Color.rgba8888ToColor(clip.getColor(), color);
-			return clip;
-		}
 		}
 		return null;
 	}
@@ -549,7 +510,7 @@ public class SkeletonBinary {
 		return array;
 	}
 
-	private void readAnimation (DataInput input, String name, SkeletonData skeletonData) {
+	private void readAnimation (String name, DataInput input, SkeletonData skeletonData) {
 		Array<Timeline> timelines = new Array();
 		float scale = this.scale;
 		float duration = 0;
@@ -562,7 +523,20 @@ public class SkeletonBinary {
 					int timelineType = input.readByte();
 					int frameCount = input.readInt(true);
 					switch (timelineType) {
-					case SLOT_ATTACHMENT: {
+					case SLOT_COLOR: {
+						ColorTimeline timeline = new ColorTimeline(frameCount);
+						timeline.slotIndex = slotIndex;
+						for (int frameIndex = 0; frameIndex < frameCount; frameIndex++) {
+							float time = input.readFloat();
+							Color.rgba8888ToColor(tempColor, input.readInt());
+							timeline.setFrame(frameIndex, time, tempColor.r, tempColor.g, tempColor.b, tempColor.a);
+							if (frameIndex < frameCount - 1) readCurve(input, frameIndex, timeline);
+						}
+						timelines.add(timeline);
+						duration = Math.max(duration, timeline.getFrames()[(frameCount - 1) * ColorTimeline.ENTRIES]);
+						break;
+					}
+					case SLOT_ATTACHMENT:
 						AttachmentTimeline timeline = new AttachmentTimeline(frameCount);
 						timeline.slotIndex = slotIndex;
 						for (int frameIndex = 0; frameIndex < frameCount; frameIndex++)
@@ -570,35 +544,6 @@ public class SkeletonBinary {
 						timelines.add(timeline);
 						duration = Math.max(duration, timeline.getFrames()[frameCount - 1]);
 						break;
-					}
-					case SLOT_COLOR: {
-						ColorTimeline timeline = new ColorTimeline(frameCount);
-						timeline.slotIndex = slotIndex;
-						for (int frameIndex = 0; frameIndex < frameCount; frameIndex++) {
-							float time = input.readFloat();
-							Color.rgba8888ToColor(tempColor1, input.readInt());
-							timeline.setFrame(frameIndex, time, tempColor1.r, tempColor1.g, tempColor1.b, tempColor1.a);
-							if (frameIndex < frameCount - 1) readCurve(input, frameIndex, timeline);
-						}
-						timelines.add(timeline);
-						duration = Math.max(duration, timeline.getFrames()[(frameCount - 1) * ColorTimeline.ENTRIES]);
-						break;
-					}
-					case SLOT_TWO_COLOR: {
-						TwoColorTimeline timeline = new TwoColorTimeline(frameCount);
-						timeline.slotIndex = slotIndex;
-						for (int frameIndex = 0; frameIndex < frameCount; frameIndex++) {
-							float time = input.readFloat();
-							Color.rgba8888ToColor(tempColor1, input.readInt());
-							Color.rgb888ToColor(tempColor2, input.readInt());
-							timeline.setFrame(frameIndex, time, tempColor1.r, tempColor1.g, tempColor1.b, tempColor1.a, tempColor2.r,
-								tempColor2.g, tempColor2.b);
-							if (frameIndex < frameCount - 1) readCurve(input, frameIndex, timeline);
-						}
-						timelines.add(timeline);
-						duration = Math.max(duration, timeline.getFrames()[(frameCount - 1) * TwoColorTimeline.ENTRIES]);
-						break;
-					}
 					}
 				}
 			}

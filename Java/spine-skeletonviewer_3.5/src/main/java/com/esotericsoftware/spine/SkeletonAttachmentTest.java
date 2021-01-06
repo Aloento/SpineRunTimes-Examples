@@ -42,7 +42,7 @@ import com.esotericsoftware.spine.attachments.SkeletonAttachment;
 public class SkeletonAttachmentTest extends ApplicationAdapter {
 	OrthographicCamera camera;
 	PolygonSpriteBatch batch;
-	SkeletonRenderer renderer;
+	SkeletonMeshRenderer renderer;
 
 	Skeleton spineboy, goblin;
 	AnimationState spineboyState, goblinState;
@@ -50,7 +50,7 @@ public class SkeletonAttachmentTest extends ApplicationAdapter {
 	public void create () {
 		camera = new OrthographicCamera();
 		batch = new PolygonSpriteBatch();
-		renderer = new SkeletonRenderer();
+		renderer = new SkeletonMeshRenderer();
 		renderer.setPremultipliedAlpha(true);
 
 		{

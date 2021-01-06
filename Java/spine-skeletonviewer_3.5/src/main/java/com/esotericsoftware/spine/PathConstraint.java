@@ -38,7 +38,7 @@ import com.esotericsoftware.spine.PathConstraintData.RotateMode;
 import com.esotericsoftware.spine.PathConstraintData.SpacingMode;
 import com.esotericsoftware.spine.attachments.Attachment;
 import com.esotericsoftware.spine.attachments.PathAttachment;
-import com.esotericsoftware.spine.utils.SpineUtils;
+import com.esotericsoftware.spine.utils.TrigUtils;
 
 /** Stores the current pose for a path constraint. A path constraint adjusts the rotation, translation, and scale of the
  * constrained bones so they follow a {@link PathAttachment}.
@@ -112,10 +112,10 @@ public class PathConstraint implements Constraint {
 			if (scale) lengths = this.lengths.setSize(boneCount);
 			for (int i = 0, n = spacesCount - 1; i < n;) {
 				Bone bone = (Bone)bones[i];
-				float setupLength = bone.data.length, x = setupLength * bone.a, y = setupLength * bone.c;
-				float length = (float)Math.sqrt(x * x + y * y);
+				float length = bone.data.length, x = length * bone.a, y = length * bone.c;
+				length = (float)Math.sqrt(x * x + y * y);
 				if (scale) lengths[i] = length;
-				spaces[++i] = (lengthSpacing ? setupLength + spacing : spacing) * length / setupLength;
+				spaces[++i] = lengthSpacing ? Math.max(0, length + spacing) : spacing;
 			}
 		} else {
 			for (int i = 1; i < spacesCount; i++)
@@ -131,7 +131,7 @@ public class PathConstraint implements Constraint {
 		else {
 			tip = false;
 			Bone p = target.bone;
-			offsetRotation *= p.a * p.d - p.b * p.c > 0 ? SpineUtils.degRad : -SpineUtils.degRad;
+			offsetRotation *= p.a * p.d - p.b * p.c > 0 ? TrigUtils.degRad : -TrigUtils.degRad;
 		}
 		for (int i = 0, p = 3; i < boneCount; i++, p += 3) {
 			Bone bone = (Bone)bones[i];
@@ -165,10 +165,10 @@ public class PathConstraint implements Constraint {
 					boneY += (length * (sin * a + cos * c) - dy) * rotateMix;
 				} else
 					r += offsetRotation;
-				if (r > SpineUtils.PI)
-					r -= SpineUtils.PI2;
-				else if (r < -SpineUtils.PI) //
-					r += SpineUtils.PI2;
+				if (r > TrigUtils.PI)
+					r -= TrigUtils.PI2;
+				else if (r < -TrigUtils.PI) //
+					r += TrigUtils.PI2;
 				r *= rotateMix;
 				cos = (float)Math.cos(r);
 				sin = (float)Math.sin(r);
@@ -211,14 +211,14 @@ public class PathConstraint implements Constraint {
 				} else if (p < 0) {
 					if (prevCurve != BEFORE) {
 						prevCurve = BEFORE;
-						path.computeWorldVertices(target, 2, 4, world, 0, 2);
+						path.computeWorldVertices(target, 2, 4, world, 0);
 					}
 					addBeforePosition(p, world, 0, out, o);
 					continue;
 				} else if (p > pathLength) {
 					if (prevCurve != AFTER) {
 						prevCurve = AFTER;
-						path.computeWorldVertices(target, verticesLength - 6, 4, world, 0, 2);
+						path.computeWorldVertices(target, verticesLength - 6, 4, world, 0);
 					}
 					addAfterPosition(p - pathLength, world, 0, out, o);
 					continue;
@@ -239,10 +239,10 @@ public class PathConstraint implements Constraint {
 				if (curve != prevCurve) {
 					prevCurve = curve;
 					if (closed && curve == curveCount) {
-						path.computeWorldVertices(target, verticesLength - 4, 4, world, 0, 2);
-						path.computeWorldVertices(target, 0, 4, world, 4, 2);
+						path.computeWorldVertices(target, verticesLength - 4, 4, world, 0);
+						path.computeWorldVertices(target, 0, 4, world, 4);
 					} else
-						path.computeWorldVertices(target, curve * 6 + 2, 8, world, 0, 2);
+						path.computeWorldVertices(target, curve * 6 + 2, 8, world, 0);
 				}
 				addCurvePosition(p, world[0], world[1], world[2], world[3], world[4], world[5], world[6], world[7], out, o,
 					tangents || (i > 0 && space == 0));
@@ -254,15 +254,15 @@ public class PathConstraint implements Constraint {
 		if (closed) {
 			verticesLength += 2;
 			world = this.world.setSize(verticesLength);
-			path.computeWorldVertices(target, 2, verticesLength - 4, world, 0, 2);
-			path.computeWorldVertices(target, 0, 2, world, verticesLength - 4, 2);
+			path.computeWorldVertices(target, 2, verticesLength - 4, world, 0);
+			path.computeWorldVertices(target, 0, 2, world, verticesLength - 4);
 			world[verticesLength - 2] = world[0];
 			world[verticesLength - 1] = world[1];
 		} else {
 			curveCount--;
 			verticesLength -= 4;
 			world = this.world.setSize(verticesLength);
-			path.computeWorldVertices(target, 2, verticesLength, world, 0, 2);
+			path.computeWorldVertices(target, 2, verticesLength, world, 0);
 		}
 
 		// Curve lengths.

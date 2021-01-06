@@ -30,8 +30,6 @@
 
 package com.esotericsoftware.spine;
 
-import com.esotericsoftware.spine.Animation.MixDirection;
-import com.esotericsoftware.spine.Animation.MixPose;
 import com.esotericsoftware.spine.attachments.AtlasAttachmentLoader;
 import com.esotericsoftware.spine.attachments.RegionAttachment;
 
@@ -146,7 +144,7 @@ public class Box2DExample extends ApplicationAdapter {
 		batch.setTransformMatrix(camera.view);
 		batch.begin();
 
-		animation.apply(skeleton, time, time, true, events, 1, MixPose.current, MixDirection.in);
+		animation.apply(skeleton, time, time, true, events, 1, false, false);
 		skeleton.x += 8 * delta;
 		skeleton.updateWorldTransform();
 		skeletonRenderer.draw(batch, skeleton);
@@ -158,8 +156,8 @@ public class Box2DExample extends ApplicationAdapter {
 			if (!(slot.getAttachment() instanceof Box2dAttachment)) continue;
 			Box2dAttachment attachment = (Box2dAttachment)slot.getAttachment();
 			if (attachment.body == null) continue;
-			float x = slot.getBone().getWorldX();
-			float y = slot.getBone().getWorldY();
+			float x = skeleton.x + slot.getBone().getWorldX();
+			float y = skeleton.y + slot.getBone().getWorldY();
 			float rotation = slot.getBone().getWorldRotationX();
 			attachment.body.setTransform(x, y, rotation * MathUtils.degRad);
 		}
